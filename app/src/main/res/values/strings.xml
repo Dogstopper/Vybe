@@ -4,5 +4,8 @@
     <string name="app_name">Vib</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_ask_permission">AskPermission</string>
+    <string name="get_started">Get Started</string>
+    <string name="title_activity_list_view_example">ListViewExampleActivity</string>
 
 </resources>

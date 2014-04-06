@@ -1,11 +1,19 @@
 package bitcamp.vybe;
 
+import android.app.ActionBar;
+import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.Telephony;
+import android.os.Build;
+import android.provider.ContactsContract;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
@@ -13,6 +21,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,10 +39,11 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class MainActivity extends ActionBarActivity implements View.OnClickListener {
+public class MainActivity extends Activity {
 
     public static final String EXTRA_MESSAGE = "message";
     public static final String PROPERTY_REG_ID = "registration_id";
@@ -51,11 +63,31 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (Build.VERSION.SDK_INT < 16) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        }
+
+        ArrayList<CustomListAdapter.Contact> contacts = new ArrayList<CustomListAdapter.Contact>();
+        Cursor c = getContactNameFromNumber();
+
+        while (c.moveToNext()) {
+            CustomListAdapter.Contact cont = new CustomListAdapter.Contact();
+            cont.imageResource = c.getInt(0);
+            cont.name = c.getString(2);
+            cont.phone = c.getString(1);
+            contacts.add(cont);
+        }
+
+        CustomListAdapter.Contact[] conts = contacts.toArray(new CustomListAdapter.Contact[]{});
+
         setContentView(R.layout.activity_main);
 
-        TextView tv = (TextView) findViewById(R.id.send);
-        tv.setOnClickListener(this);
+        ListView listview = (ListView) findViewById(R.id.listview);
+        listview.setAdapter(new CustomListAdapter(this.getApplicationContext(),conts));
 
+        prefs = getSharedPreferences("bitcamp.vybe", MODE_PRIVATE);
         context = this.getApplicationContext();
 
         // Check device for Play Services APK.
@@ -68,8 +100,37 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 registerInBackground();
             }
         }
+
+        ListView listView = (ListView) findViewById(R.id.listview);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+                Toast.makeText(getApplicationContext(),
+                        "Click ListItem Number " + position, Toast.LENGTH_LONG)
+                        .show();
+            }
+        });
     }
 
+    private Cursor getContactNameFromNumber() {
+        ContentResolver cr = getContentResolver();
+
+        String [] projection = new String []{
+                ContactsContract.CommonDataKinds.Phone.CONTACT_STATUS_ICON,
+                ContactsContract.CommonDataKinds.Phone.NUMBER,
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
+        };
+
+        Cursor cursor = cr.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                projection,
+                null,
+                null,
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC");
+
+        // return the original number if no match was found
+        return cursor;
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -96,6 +157,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
         checkPlayServices();
+
+        if (prefs.getBoolean("firstrun", true)) {
+            Intent permissionIntent = new Intent(this, AskPermissionActivity.class);
+            startActivity(permissionIntent);
+            Log.d("bitcamp","First Run");
+            prefs.edit().putBoolean("firstrun", false).commit();
+        }
     }
 
     /**
@@ -256,6 +324,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         editor.commit();
     }
 
+    /*
     public void onClick(final View view) {
         if (view == findViewById(R.id.send)) {
             new AsyncTask<Void, Void, String>() {
@@ -283,5 +352,5 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             }.execute(null, null, null);
         }
     }
-
+    */
 }
