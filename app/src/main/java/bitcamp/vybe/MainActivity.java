@@ -5,8 +5,10 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.provider.Telephony;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,6 +19,13 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -158,7 +167,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         Log.d("MAIN", "registerInBackground()");
         new AsyncTask<Void,Void, String>() {
             @Override
-            protected String doInBackground(Void... params) {
+            protected String doInBackground(Void... pars) {
                 Log.d("MAIN", "doInBackground()");
                 String msg = "";
                 try {
@@ -168,6 +177,26 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     regid = gcm.register(SENDER_ID);
 
                     // Make an HTTP REQUEST and GET/POST phone # and regid
+                    HttpClient hc = new DefaultHttpClient();
+
+                    // Prepare a request object
+                    HttpParams params = new BasicHttpParams();
+                    TelephonyManager tMgr = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+
+                    params.setParameter("phone",tMgr.getLine1Number());
+                    Log.d("MAIN", "Number: " + tMgr.getLine1Number());
+                    params.setParameter("regId", regid);
+
+                    HttpGet httpget = new HttpGet("tranquil-dusk-7367.herokuapp.com/newuser");
+                    httpget.setParams(params);
+
+                    // Execute the request
+                    HttpResponse response;
+                    try {
+                        hc.execute(httpget);
+                    } catch (Exception e) {
+                        Log.e("MAIN", e.getMessage());
+                    }
 
                     msg = "Device registered, registration ID=" + regid;
                     Log.d("MAIN", msg);
