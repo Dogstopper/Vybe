@@ -26,6 +26,10 @@ public class VibrateStartWakefulService extends IntentService {
         String messageType = gcm.getMessageType(intent);
 
         if (!extras.isEmpty()) {  // has effect of unparcelling Bundle
+            Log.d("SERVICE", "EXTRAS NOT EMPTY");
+            for (String s: extras.keySet()) {
+                Log.d("SERVICE EXTRA", "EXTRA: (" + s + ", " + extras.get(s) + ")");
+            }
             /*
              * Filter messages based on message type. Since it is likely that GCM
              * will be extended in the future with new message types, just ignore
@@ -49,6 +53,9 @@ public class VibrateStartWakefulService extends IntentService {
                 //sendNotification("Received: " + extras.toString());
                 Log.i("SERVICE", "Received: " + extras.toString());
             }
+        }
+        else {
+            Log.d("SERVICE", "EXTRAS EMPTY");
         }
         // Release the wake lock provided by the WakefulBroadcastReceiver.
         VibrateStartWakefulReciever.completeWakefulIntent(intent);

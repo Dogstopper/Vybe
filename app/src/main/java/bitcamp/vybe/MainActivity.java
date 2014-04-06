@@ -29,7 +29,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
-    String SENDER_ID = "tough-history-541";
+    String SENDER_ID = "1090329590366";
 
     TextView mDisplay;
     GoogleCloudMessaging gcm;
@@ -54,6 +54,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             gcm = GoogleCloudMessaging.getInstance(this);
             regid = getRegistrationId(context);
 
+            Log.d("MAIN", "REGID: " + regid);
             if (regid.length() == 0) {
                 registerInBackground();
             }
@@ -117,6 +118,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             // app version.
             int registeredVersion = prefs.getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
             int currentVersion = getAppVersion(context);
+            Log.d("Vybe", currentVersion+"");
             if (registeredVersion != currentVersion) {
                 Log.i("Vybe", "App version changed.");
                 return "";
@@ -153,16 +155,22 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
     private void registerInBackground() {
+        Log.d("MAIN", "registerInBackground()");
         new AsyncTask<Void,Void, String>() {
             @Override
             protected String doInBackground(Void... params) {
+                Log.d("MAIN", "doInBackground()");
                 String msg = "";
                 try {
                     if (gcm == null) {
                         gcm = GoogleCloudMessaging.getInstance(context);
                     }
                     regid = gcm.register(SENDER_ID);
+
+                    // Make an HTTP REQUEST and GET/POST phone # and regid
+
                     msg = "Device registered, registration ID=" + regid;
+                    Log.d("MAIN", msg);
                     // You should send the registration ID to your server over HTTP,
                     // so it can use GCM/HTTP or CCS to send messages to your app.
                     // The request to your server should be authenticated if your app
@@ -180,6 +188,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     // If there is an error, don't just keep trying to register.
                     // Require the user to click a button again, or perform
                     // exponential back-off.
+                    Log.e("MAIN", msg);
                 }
                 return msg;
             }
@@ -188,7 +197,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             protected void onPostExecute(String msg) {
                 Toast.makeText(context,msg, Toast.LENGTH_LONG).show();
             }
-        }.execute(null, null, null);
+        }.execute();
     }
 
     /**
@@ -198,7 +207,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
      * using the 'from' address in the message.
      */
     private void sendRegistrationIdToBackend() {
-        // Your implementation here.
+
     }
 
     /**
