@@ -1,16 +1,21 @@
 package bitcamp.vybe;
 
+import android.app.ActionBar;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,7 +27,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class MainActivity extends ActionBarActivity implements View.OnClickListener {
+public class MainActivity extends Activity implements View.OnClickListener {
 
     public static final String EXTRA_MESSAGE = "message";
     public static final String PROPERTY_REG_ID = "registration_id";
@@ -42,7 +47,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (Build.VERSION.SDK_INT < 16) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        }
+
         setContentView(R.layout.activity_main);
+
+        prefs = getSharedPreferences("bitcamp.vybe", MODE_PRIVATE);
 
         TextView tv = (TextView) findViewById(R.id.send);
         tv.setOnClickListener(this);
@@ -86,6 +99,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
         checkPlayServices();
+
+        if (prefs.getBoolean("firstrun", true)) {
+            Intent permissionIntent = new Intent(this, AskPermissionActivity.class);
+            startActivity(permissionIntent);
+            Log.d("bitcamp","First Run");
+            prefs.edit().putBoolean("firstrun", false).commit();
+        }
     }
 
     /**
